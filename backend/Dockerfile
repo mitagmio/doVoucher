@@ -20,4 +20,4 @@ COPY . /backend
 
 # Start app
 #CMD ["python", "main.py"]
-CMD ["poetry", "run", "uvicorn", "main:app", "--host=0.0.0.0", "--port=9995", "--reload"]
+CMD ["poetry", "run", "uvicorn", "main:app", "--host=0.0.0.0", "--port=9997", "--reload"]

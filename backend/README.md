@@ -21,9 +21,9 @@ http://localhost:8001/docs
 
 ## docker 
 
-docker build --rm -t txme-backend:latest .
+docker build --rm -t opcall-backend:latest .
 
-docker run --env-file .env --rm  -p 9995:9995 --name txme-backend txme-backend:latest 
+docker run --env-file .env --rm  -p 9995:9995 --name opcall-backend opcall-backend:latest 
 
 
 # Backend tmux
@@ -40,6 +40,6 @@ pip install Uvicorn
 
 ### Run
 ```
-poetry run uvicorn main:app --host=0.0.0.0 --port=9995 --reload  
+poetry run uvicorn main:app --host=0.0.0.0 --port=9997 --reload  
 ```
 

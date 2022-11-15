@@ -27,8 +27,8 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ### build
 
-    docker build --rm --no-cache -t meta_pipe:latest .
+    docker build --rm --no-cache -t opcall:latest .
 
 ### run
 
-    docker run --rm  -p 80:80  --name meta_pipe meta_pipe:latest
+    docker run --rm  -p 80:80  --name opcall opcall:latest
