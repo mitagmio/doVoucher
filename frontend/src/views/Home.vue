@@ -10,7 +10,7 @@
       v-if="!form.isLoading && !qrCode"
     >
       <div class="m-form__input">
-        <h3>Payment decription</h3>
+        <h2>Decription</h2>
         <div class="m-form__input-row">
           <input placeholder="Title" type="text" v-model="form.title">
         </div>
@@ -30,16 +30,20 @@
       <div class="m-form__input m-form__extra-info">
         <button @click="submit" class="btn">Make check</button>
       </div>
+      <!-- <div v-if="gallery">{{ gallery }}</div> -->
     </div>
     <div class="pay__qr__div" v-else-if="qrCode">
       <vue-qrcode :value='qrCode' :options="{ width: 200 }" ></vue-qrcode>
-      <div><a :href="qrCode">{{ qrCode }}</a></div>
+      <div><a :href="qrCode">Check link</a></div>
+      <div><button @click="copy(qrCode)" class="btn">Copy</button></div>
     </div>
     <LoaderElement class="collections" v-if="form.isLoading">Loading...</LoaderElement>
   </Sketch>
 </template>
 
 <script setup>
+    import { getNFTBalance } from "@/api";
+    import Web3 from 'web3';
     import Sketch from '@/components/UI/Sketch'
     import LoaderElement from '@/components/UI/Loader'
     import SelectComponent from '@/components/UI/SelectComponent/Index'
@@ -58,8 +62,7 @@
     const isTransfer = ref(true)
     let userBalance = ref(null)
     let qrCode = ref(null)
-
-    let qrLink = ref(null)
+    let gallery = ref(null)
 
     const initialState = {
       title: '',
@@ -78,6 +81,8 @@
 
     const form = reactive({...initialState})
 
+    // console.log('Owner', connection.userIdentity)
+
     watch(() => connection.value.userIdentity, (newValue) => {
         if(newValue) {
           const tokenDefault = getSettings(ConnectionStore.getNetwork().name)
@@ -93,8 +98,8 @@
     onMounted(() => {
       const tokenDefault = getSettings(ConnectionStore.getNetwork().name)
 
-
       if (tokenDefault && tokenDefault.defaultActiveToken) {
+        getGallery()
         // getUserBalance()
         form.tokenAddress = tokenDefault.defaultActiveToken
       }
@@ -117,6 +122,16 @@
       form.toNetwork = data.id
     }
 
+    const getGallery = async() => {
+      const chain = connection.value.userNetworkName.split('_')[0]
+
+      const NFTBalance = await getNFTBalance(connection.value.userIdentity, chain)
+
+      console.log('NFTBalance: ', NFTBalance.result[0])
+
+      gallery.value = NFTBalance.result
+    }
+
 
     const getUserBalance = async () => {
         try{
@@ -129,7 +144,8 @@
         }
     }
 
-    const copy = async () => {
+    const copy = async (qrCode) => {
+      await navigator.clipboard.writeText(qrCode);
     }
 
     const submit = async () => {

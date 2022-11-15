@@ -5,6 +5,8 @@ import MAINNET from './ERC20Native/MAINNET.json'
 import ChainLinkABI from './ChainLinkABI.json'
 import doPayABI from './doPayABI.json'
 import DebridgeABI from './DebridgeABI.json'
+import QRCheckABI from './QRCheckABI.json'
+import ERC721ABI from './ERC721ABI.json'
 import usdc_polygon from './ERC20Tokens/usdc_polygon.json'
 import usdc_ethereum from './ERC20Tokens/usdc_ethereum.json'
 
@@ -38,6 +40,12 @@ export default {
     },
     doPayContract: {
         ABI: doPayABI
+    },
+    ERC721Contract: {
+        ABI: ERC721ABI
+    },
+    QRCheckContract: {
+        ABI: QRCheckABI
     },
     ChainLinkABI: {
         ABI: ChainLinkABI

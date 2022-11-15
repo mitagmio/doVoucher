@@ -1,6 +1,5 @@
 # build stage
-#FROM node:lts-alpine as build-stage
-FROM node:17.1.0 as build-stage
+FROM node:16-alpine as build-stage
 ENV NODE_OPTIONS=--max_old_space_size=8000
 WORKDIR /app
 COPY package*.json ./

@@ -78,8 +78,9 @@
   import {ref} from "vue";
   import AppConnector from '@/crypto/AppConnector'
   import {Ethereum} from '@/crypto/helpers'
-
-
+  import {checkMetamask} from "@/utils/walletCheck"
+  import {mobileMetamaskLinkBuilder} from "@/utils/mobileLinkBuilder"
+  import {detectMobile} from "@/utils/detectMobile"
 
   const {
       isOpen,
@@ -99,6 +100,14 @@
   const submit = async () => {
 
       try{
+          if(selectedWallet.value === 'Metamask' && detectMobile() && !checkMetamask()) {
+              const appLink = document.createElement('a')
+              appLink.href = mobileMetamaskLinkBuilder()
+              appLink.target = '_blank'
+              appLink.click()
+              return;
+          }
+
           isConnecting.value = true
           let selected = (selectedWallet.value === '1inch')? 'walletconnect' : selectedWallet.value
           await (await AppConnector.init(Ethereum.ConnectorTypes.RARIBLE)).connect(selected)

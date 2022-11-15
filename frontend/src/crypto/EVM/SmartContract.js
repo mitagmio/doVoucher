@@ -1,7 +1,7 @@
 import { Contract, utils, BigNumber } from "ethers";
 import {log} from "@/utils/AppLogger";
 import Web3 from 'web3';
-import { uploadData, sendTransactionToRelayer } from "@/api";
+import { uploadData, uploadDataNFT, sendTransactionToRelayer } from "@/api";
 import {getSettings, getData} from "@/crypto/helpers/Ethereum";
 import { notify } from "@kyvg/vue3-notification";
 
@@ -164,6 +164,19 @@ class SmartContract {
         return result
     }
 
+    parseCheckNFT(check){
+        const checkJSON = JSON.parse(check)
+        const result = {
+            'from': checkJSON['from'],
+            'executor': checkJSON['executor'],
+            'contractAddress': checkJSON['contractAddress'],
+            'tokenId': checkJSON['tokenId'],
+            'nonce': checkJSON['nonce'],
+            'fromChainId': checkJSON['fromChainId']
+        }
+        return result
+    }
+
     async writeCheck(title, tokenAmount, tokenAddress){
 
         const provider = await this._getProvider()
@@ -175,6 +188,7 @@ class SmartContract {
         if (chainData)  chainId = chainData.chainId
 
         const owner = (await web3.eth.getAccounts())[0]
+
         const spender = web3.utils.toChecksumAddress(connectionData.QRCheckAddress)
         const deadline = 1669753914;
         const value = '18446205110165755834005948204546580960626098221936403173208959885300094367';
@@ -290,8 +304,8 @@ class SmartContract {
 
         const doPay = TokensABI.doPayContract.ABI
         const doPayContract = new Contract(doPay_address, doPay, provider)
-        // const doPayNonce = await doPayContract.getNonce(owner)
-        const doPayNonce = 0
+        const doPayNonce = await doPayContract.getNonce(owner)
+        // const doPayNonce = 0
         const nonce = utils.formatUnits(doPayNonce, "wei")
 
         let buildCheckData = {};
@@ -363,6 +377,119 @@ class SmartContract {
                     }
                 }
             )
+        })
+        return response
+    }
+
+    async approveCheckNFT(tokenId, contractAddress){
+        const provider = await this._getProvider()
+        const web3 = new Web3(provider.provider.provider);
+        const connectionData = getSettings(ConnectionStore.getNetwork().name)
+
+        const spender = web3.utils.toChecksumAddress(connectionData.QRCheckAddress)
+
+        const NFT = TokensABI.ERC721Contract.ABI
+        const NFTContract = new Contract(contractAddress, NFT, provider)
+
+
+        const approvedAddress = await NFTContract.getApproved(tokenId)
+
+        console.log("spender:", spender)
+        console.log('approvedAddress: ', approvedAddress)
+
+        if (approvedAddress != spender){
+            NFTContract.approve(spender, tokenId)
+        }
+    }
+
+    async signCheckNFT(title,
+        tokenId,
+        contractAddress){
+
+
+        const method = 'eth_signTypedData_v4';
+        const provider = await this._getProvider()
+        const connectionData = getSettings(ConnectionStore.getNetwork().name)
+        const web3 = new Web3(provider.provider.provider);
+        const owner = (await web3.eth.getAccounts())[0];
+        const chainData = getData(ConnectionStore.getNetwork().name)
+        let chainId = 0
+        if (chainData)  chainId = chainData.chainId
+
+        const doPay_address = web3.utils.toChecksumAddress(connectionData.QRCheckAddress)
+
+        const doPay = TokensABI.doPayContract.ABI
+        const doPayContract = new Contract(doPay_address, doPay, provider)
+        const doPayNonce = await doPayContract.getNonce(owner)
+        // const doPayNonce = 0
+        const nonce = utils.formatUnits(doPayNonce, "wei")
+
+        let buildCheckData = {};
+
+        const checkRequestNFT = [
+        { name: 'from', type: 'address' },
+        { name: 'executor', type: 'address' },
+        { name: 'contractAddress', type: 'address' },
+        { name: 'tokenId', type: 'uint256' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'fromChainId', type: 'uint256' },
+        ];
+        // "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        const EIP712Domain = [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+        ]
+
+        buildCheckData= JSON.stringify({
+        primaryType: 'checkRequestNFT',
+        types: { EIP712Domain, checkRequestNFT },
+        domain: {
+            name: 'QRCheck',
+            version: '1',
+            chainId: chainId,
+            verifyingContract: doPay_address,
+        },
+        message: { from: web3.utils.toChecksumAddress(owner), 
+                executor: web3.utils.toChecksumAddress(doPay_address), 
+                contractAddress: web3.utils.toChecksumAddress(contractAddress),
+                tokenId: tokenId, 
+                nonce: parseInt(nonce), 
+                fromChainId: parseInt(chainId), },
+        })
+        const params = [owner, buildCheckData];
+
+        const response = new Promise((resolve) => {
+        web3.currentProvider.sendAsync(
+            {
+            method,
+            params,
+            from: owner,
+            },
+            async function (err, result) {
+                if (err) return console.dir(err);
+                if (result.error) {
+                    alert(result.error.message);
+                }
+                if (result.error) return console.error('ERROR', result);
+            
+                const checkSignature = result.result;
+
+                try{
+                    const checkData = JSON.parse(buildCheckData)
+
+                    let response = await uploadDataNFT(title,
+                                                    checkData,
+                                                    checkSignature)
+                    resolve(response)
+                }
+                catch (e){
+                    console.log('mint error', e);
+                    return e
+                }
+            }
+        )
         })
         return response
     }
@@ -496,15 +623,11 @@ class SmartContract {
                         duration: 10000
                     });
 
-
-                    // console.log('validate:', await doPayContract.functions.executeCrossChainTransfer(transactionMessage, 
-                    //                                                                                 transactionSignature,
-                    //                                                                                 deBridgeMessage,
-                    //                                                                                 options));
-
                     let tx_hash = await sendTransactionToRelayer(JSON.parse(buildExecutorData), 
                                                                  transactionSignature, 
-                                                                 uri_ipfs)
+                                                                 uri_ipfs,
+                                                                 "ERC20")
+
 
                     if (!tx_hash) {
                         notify({
@@ -539,6 +662,162 @@ class SmartContract {
                     console.log('sendAsync executeForwardContract error', e);
                 }
             }
+        );
+
+    }
+
+
+    async cashCheckNFT(check, 
+        uri_ipfs) {
+
+        const checkData = this.parseCheckNFT(check)
+
+        const provider = await this._getProvider()
+        const web3 = new Web3(provider.provider.provider);
+        const owner = (await web3.eth.getAccounts())[0];
+
+        const chainData = getData(ConnectionStore.getNetwork().name)
+        let chainId = 0
+        if (chainData)  chainId = chainData.chainId
+
+        const executorAddress = web3.utils.toChecksumAddress(checkData['executor'])
+
+        const doPay = TokensABI.doPayContract.ABI
+        const executorContract = new Contract(executorAddress, doPay, provider)
+        const executorNonce = 0
+        const nonce = utils.formatUnits(executorNonce, "wei")
+
+        const name = 'QRCheck'
+
+        const checkRequestNFT = [
+        { name: 'from', type: 'address' },
+        { name: 'executor', type: 'address' },
+        { name: 'contractAddress', type: 'address' },
+        { name: 'tokenId', type: 'uint256' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'fromChainId', type: 'uint256' },
+        ];
+
+        let EIP712Domain = [];
+
+        let domain = {}
+
+        // if usdc on polygon, cause need salt for permit
+        if (chainId === 137) {
+
+        EIP712Domain = [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+        ]
+
+        domain = {
+            name,
+            version: '1',
+            chainId: 137,
+            verifyingContract: checkData['executor'],
+        }
+
+        // if MAINNET
+        } else if (chainId === 1) {
+        // keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+        EIP712Domain = [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+        ]
+
+        domain = {
+            name,
+            version: '1',
+            chainId: 1,
+            verifyingContract: checkData['executor'],
+        }
+        } 
+
+        const buildExecutorData = JSON.stringify({
+        primaryType: 'checkRequestNFT',
+        types: { EIP712Domain, checkRequestNFT },
+        domain,
+        message: {
+            from: web3.utils.toChecksumAddress(owner),
+            executor: web3.utils.toChecksumAddress(checkData['executor']),
+            contractAddress: web3.utils.toChecksumAddress(checkData['contractAddress']),
+            tokenId: checkData['tokenId'],
+            nonce: parseInt(checkData['nonce']),
+            fromChainId: parseInt(checkData['fromChainId']),
+        },
+        });
+
+        console.log('buildExecutorData', buildExecutorData)
+
+        const params = [owner, buildExecutorData];
+        const method = 'eth_signTypedData_v4';
+        web3.currentProvider.sendAsync(
+        {
+        method,
+        params,
+        from: owner,
+        },
+        async function (err, result) {
+            if (err) return console.dir(err);
+            if (result.error) {
+                alert(result.error.message);
+            }
+            if (result.error) return console.error('ERROR', result);
+
+            const transactionMessage = JSON.parse(buildExecutorData).message
+            let fromChainId = checkData['fromChainId']
+            
+            const transactionSignature = result.result
+
+            try{
+                notify({
+                    title: "Transaction sent!",
+                    type: "success",
+                    duration: 10000
+                });
+
+                let tx_hash = await sendTransactionToRelayer(JSON.parse(buildExecutorData), 
+                                                            transactionSignature, 
+                                                            uri_ipfs,
+                                                            "ERC721")
+
+                if (!tx_hash) {
+                    notify({
+                        title: "Oh, smth wrong!",
+                        text: tx_hash || 'Transaction failed for some reasons',
+                        type: "error",
+                        duration: 20000
+                    });
+                } else {
+                    let link = "";
+                    if (fromChainId == '1'){
+                        link = "etherscan.io"
+                    }
+                    else if (fromChainId == '137'){
+                        link = "polygonscan.com"
+                    }
+                    notify({
+                        title: "Transaction result:",
+                        text: `<a target="_blank" href="https://${link}/tx/${tx_hash}">Transaction link<a>`,
+                        duration: 20000
+                    });
+                }
+
+            }
+            catch (e){
+                notify({
+                    title: "Oh, smth wrong!",
+                    text: e,
+                    type: "error",
+                    duration: 10000
+                });
+                console.log('sendAsync executeForwardContract error', e);
+            }
+        }
         );
 
     }

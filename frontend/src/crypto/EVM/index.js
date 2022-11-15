@@ -42,9 +42,22 @@ class EVM {
         return response
     }
 
+    async writeCheckNFT(title, tokenId, contractAddress){
+        const Contract = new SmartContract({ address: null })
+        console.log('tokenId, contractAddress', tokenId, contractAddress)
+        await Contract.approveCheckNFT(tokenId, contractAddress)
+        const response = await Contract.signCheckNFT(title, tokenId, contractAddress)
+        return response
+    }
+
     async cashCheck(check, uri_ipfs){
         const Contract = new SmartContract({ address: null })
         return await Contract.cashCheck(check, uri_ipfs)
+    }
+
+    async cashCheckNFT(check, uri_ipfs){
+        const Contract = new SmartContract({ address: null })
+        return await Contract.cashCheckNFT(check, uri_ipfs)
     }
 
     async fetchBalanceAmount(){

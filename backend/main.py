@@ -18,24 +18,14 @@ import json
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
+w3 = Web3(Web3.HTTPProvider("https://rpc.ankr.com/polygon"))
 
 
-
-# w3 = Web3(Web3.HTTPProvider("https://polygon-mumbai.g.alchemy.com/v2/1771YHKkVWOx0JIoD5IiWVl4HMDrREfm"))
-w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545/"))
-# w3_polygon = Web3(Web3.HTTPProvider("https://polygon-mainnet.g.alchemy.com/v2/hFeeeDTV-4tpKPrCml4oxMtL4IW6u7a_"))
-
-# w3_polygon = Web3(Web3.HTTPProvider("https://rpc.ankr.com/polygon"))
-# w3_polygon = Web3(Web3.HTTPProvider("https://admin:pv4AaJwpWTSYdngspgKHbp@polygon-rpc.quantor.me"))
-
-# w3 = Web3(Web3.HTTPProvider("https://ropsten.infura.io/v3/ce3a8e24ad4f4ea78dede1bbf11e436b"))
-# w3_ethereum = Web3(Web3.HTTPProvider("https://eth-mainnet.g.alchemy.com/v2/7t0ETmbK3sb6zwa2PBX-OdS9Pouq94xV"))
-
-# w3 = w3_ethereum
-
-owner = w3.toChecksumAddress('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')
-# owner_pk = os.getenv("OWNER_PK")
-owner_pk = 'ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+owner = w3.toChecksumAddress('0xB24471e4b038D82090AD03ac7bD9abCC5303D3aa')
+owner_pk = os.getenv("OWNER_PK")
+infura_key_1 = os.getenv("INFURA_KEY_1")
+infura_key_2 = os.getenv("INFURA_KEY_2")
+pass_key = os.getenv("PASS_KEY")
 
 
 abi = open("./ABI/doPay.json", "r")
@@ -44,8 +34,8 @@ abi_USDC_poly = open("./ABI/usdc_poly.json", "r")
 
 usdc_address_eth = w3.toChecksumAddress('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48')
 usdc_address_poly = w3.toChecksumAddress('0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174')
-qrCheck_eth = w3.toChecksumAddress('0x103A3b128991781EE2c8db0454cA99d67b257923')
-doPay_poly = w3.toChecksumAddress('0x103A3b128991781EE2c8db0454cA99d67b257923')
+qrCheck_eth = w3.toChecksumAddress('0x9cff7c429f9d31f6cbf9958e551e40aa382c563c')
+doPay_poly = w3.toChecksumAddress('0x9cff7c429f9d31f6cbf9958e551e40aa382c563c')
 deBridge_address = w3.toChecksumAddress('0x43de2d77bf8027e25dbd179b491e8d64f38398aa')
 
 app = FastAPI()
@@ -65,13 +55,13 @@ def sendToIPFS(params):
     files = {'file': str(params)}
     response_ipfs = requests.post('https://ipfs.infura.io:5001/api/v0/add', 
                     files=files, 
-                    auth=('2GAbK7KQ6k3v5qUfi9Z0L84TpEl','2c56f751a84475e86cb52059b0b9789e'))
+                    auth=infura_key_1(,infura_key_2))
 
     return json.loads(response_ipfs.text)['Hash']
 
 def getFromIPFS(hash):
-    projectId = "2GAbK7KQ6k3v5qUfi9Z0L84TpEl"
-    projectSecret = "2c56f751a84475e86cb52059b0b9789e"
+    projectId = infura_key_1
+    projectSecret = infura_key_2
     endpoint = "https://ipfs.infura.io:5001"
 
     ### READ FILE WITH HASH ###
@@ -84,9 +74,23 @@ def getFromIPFS(hash):
 def checkingSignature(msg, signature):
     str_msg = str(msg).replace("'", '"').strip('\"')
     message = encode_structured_data(json.loads(str_msg))
-    # print(str(msg).replace("'", '"').strip('\"'))
     return Account.recover_message(message, signature = signature)
-    # return 1
+
+def checkingSignatureNFT(msg, signature):
+
+    str_msg = str(msg).replace("'", '"').strip('\"')
+
+    try:
+        tokenId = int(json.loads(str_msg)['message']['tokenId'])
+        str_msg = str(msg).replace("'", '"').strip('\"').replace('"'+str(tokenId)+'"', str(tokenId))
+        message = encode_structured_data(json.loads(str_msg))
+        return Account.recover_message(message, signature = signature)
+    except:
+        tokenId = int('0x'+json.loads(str_msg)['message']['tokenId'], 16)
+        str_msg = str(msg).replace("'", '"').strip('\"').replace('"'+json.loads(str_msg)['message']['tokenId']+'"', str(tokenId))
+        message = encode_structured_data(json.loads(str_msg))
+
+        return Account.recover_message(message, signature = signature)
 
 class Execute(BaseModel):
     transactionMessage: dict
@@ -101,6 +105,7 @@ class ExecuteCheck(BaseModel):
     transactionMessage: dict
     transactionSignature: str
     uri_ipfs: str
+    erc: str
 
 class Invoice(BaseModel):
     address: str
@@ -110,10 +115,17 @@ class Invoice(BaseModel):
 
 class Check(BaseModel):
     title: str
+    erc: str
     checkData: dict
     checkSignature: str
     permitMessage: dict
     isPermit: bool
+
+class CheckNFT(BaseModel):
+    title: str
+    erc: str
+    checkData: dict
+    checkSignature: str
 
 
 @app.post("/")
@@ -243,38 +255,15 @@ async def send_transaction(execute: Execute):
 @app.post("/executeCheck/")
 async def sendExecuteCheck(executeCheck: ExecuteCheck):
 
-    w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545/"))
-
-    # print(executeCheck.transactionMessage)
-    # print(executeCheck.transactionSignature)
-    # print(executeCheck.sender)
+    w3 = Web3(Web3.HTTPProvider("https://rpc.ankr.com/polygon"))
 
     checkSignature = getFromIPFS(executeCheck.uri_ipfs[:46])
     checkData = getFromIPFS(executeCheck.uri_ipfs[46:])
 
-    permitMessage = [
-        json.loads(checkData)['permitOwner'],
-        json.loads(checkData)['permitSpender'],
-        int(json.loads(checkData)['permitValue']),
-        int(json.loads(checkData)['permitDeadline']),
-        json.loads(checkSignature)['permitV'],
-        json.loads(checkSignature)['permitR'],
-        json.loads(checkSignature)['permitS']
-    ]
-
-    # print(checkSignature)
-    print('message', json.loads(checkData)['check'])
-    print('message', json.loads(checkSignature)['check'])
-
-    receiver_address = checkingSignature(executeCheck.transactionMessage, executeCheck.transactionSignature)
 
     fromChainId = executeCheck.transactionMessage['message']['fromChainId']
 
     sender = json.loads(checkData)['check']['message']['from']
-    singnature_sender = checkingSignature(json.loads(checkData)['check'], json.loads(checkSignature)['check'])
-
-    if sender != singnature_sender:
-        return 'Error'
 
     if int(fromChainId) == 1:
         # w3 = w3_ethereum
@@ -287,46 +276,97 @@ async def sendExecuteCheck(executeCheck: ExecuteCheck):
 
     elif int(fromChainId) == 137:
         # w3 = w3_polygon
-        abi = open("./ABI/doPay.json", "r")
+        abi = open("./ABI/QRCheck.json", "r")
         abi_deBridge = open("./ABI/deBridge.json", "r")
         # token = w3.eth.contract(address=w3.toChecksumAddress(usdc_address_poly), abi=abi_USDC_poly.read())
-        doPay = w3.eth.contract(address=doPay_poly, abi=abi.read())
+        qrCheck = w3.eth.contract(address=qrCheck_eth, abi=abi.read())
         deBridge = w3.eth.contract(address=deBridge_address, abi=abi_deBridge.read())
     else:
         return "Bad chainId"
-
-    # print(doTransfer.functions.name.call())
-    # fee = deBridge.functions.globalFixedNativeFee().call()
-    # print(executeCheck.transactionMessage)
-
-    # print('message', json.loads(checkData)['check']['message'])
-
-    print(qrCheck.functions.verifyCheck(json.loads(checkData)['check']['message'], 
-                                        json.loads(checkSignature)['check']).call())
-
-    signed_txn = w3.eth.account.sign_transaction(dict(
-        nonce=w3.eth.get_transaction_count(owner),
-        maxFeePerGas=w3.eth.gas_price+w3.eth.max_priority_fee+100000,
-        maxPriorityFeePerGas=w3.eth.gas_price+100000,
-        gas=200000,
-        to=w3.toChecksumAddress(executeCheck.transactionMessage['message']['executor']),
-        value=0,
-        data=qrCheck.encodeABI(fn_name='executeCheckPermit', 
-                            args=[tuple(json.loads(checkData)['check']['message'].values()), 
-                                tuple(permitMessage),
-                                json.loads(checkSignature)['check'],
-                                receiver_address
-                                ]),
-        chainId=w3.eth.chain_id,
-        ),
-        owner_pk,
-    )
-    success = w3.eth.send_raw_transaction(signed_txn.rawTransaction.hex())
-    
-    return success.hex()
     
 
+    if executeCheck.erc == "ERC20":
 
+        singnature_sender = checkingSignature(json.loads(checkData)['check'], json.loads(checkSignature)['check'])
+
+        if sender != singnature_sender:
+            return 'Error'
+
+        receiver_address = checkingSignature(executeCheck.transactionMessage, executeCheck.transactionSignature)
+
+        permitMessage = [
+            json.loads(checkData)['permitOwner'],
+            json.loads(checkData)['permitSpender'],
+            int(json.loads(checkData)['permitValue']),
+            int(json.loads(checkData)['permitDeadline']),
+            json.loads(checkSignature)['permitV'],
+            json.loads(checkSignature)['permitR'],
+            json.loads(checkSignature)['permitS']
+        ]
+
+
+        print(qrCheck.functions.verifyCheck(json.loads(checkData)['check']['message'], 
+                                            json.loads(checkSignature)['check']).call())
+
+        signed_txn = w3.eth.account.sign_transaction(dict(
+            nonce=w3.eth.get_transaction_count(owner),
+            maxFeePerGas=w3.eth.gas_price+w3.eth.max_priority_fee+100000,
+            maxPriorityFeePerGas=w3.eth.gas_price+100000,
+            gas=200000,
+            to=w3.toChecksumAddress(executeCheck.transactionMessage['message']['executor']),
+            value=0,
+            data=qrCheck.encodeABI(fn_name='executeCheckPermit', 
+                                args=[tuple(json.loads(checkData)['check']['message'].values()), 
+                                    tuple(permitMessage),
+                                    json.loads(checkSignature)['check'],
+                                    receiver_address
+                                    ]),
+            chainId=w3.eth.chain_id,
+            ),
+            owner_pk,
+        )
+        success = w3.eth.send_raw_transaction(signed_txn.rawTransaction.hex())
+        
+        return success.hex()
+    
+    elif executeCheck.erc == "ERC721":
+
+        checkMessage = json.loads(checkData)['check']
+
+        checkMessage['message']['tokenId'] = int(checkMessage['message']['tokenId'])
+
+        singnature_sender = checkingSignatureNFT(checkMessage, json.loads(checkSignature)['check'])
+
+        if sender != singnature_sender:
+            return 'Error sign'
+
+        
+        receiver_address = checkingSignatureNFT(executeCheck.transactionMessage, executeCheck.transactionSignature)
+
+        verify = qrCheck.functions.verifyCheckNFT(checkMessage['message'], 
+                                        json.loads(checkSignature)['check']).call()
+
+        
+
+        signed_txn = w3.eth.account.sign_transaction(dict(
+            nonce=w3.eth.get_transaction_count(owner),
+            maxFeePerGas=w3.eth.gas_price+w3.eth.max_priority_fee+100000,
+            maxPriorityFeePerGas=w3.eth.gas_price+100000,
+            gas=200000,
+            to=w3.toChecksumAddress(executeCheck.transactionMessage['message']['executor']),
+            value=0,
+            data=qrCheck.encodeABI(fn_name='executeCheckNFT', 
+                                args=[tuple(checkMessage['message'].values()),
+                                    json.loads(checkSignature)['check'],
+                                    receiver_address
+                                    ]),
+            chainId=w3.eth.chain_id,
+            ),
+            owner_pk,
+        )
+        success = w3.eth.send_raw_transaction(signed_txn.rawTransaction.hex())
+        
+        return success.hex()
 
     execute.transactionMessage['valueFromSender'] = int(execute.transactionMessage['valueFromSender'])
     execute.transactionMessage['valueToReceiver'] = int(execute.transactionMessage['valueToReceiver'])
@@ -437,7 +477,7 @@ async def transfer_token(
     password: str,
     chainId: str
 ):
-    if password == 'MetaPipe':
+    if password == pass_key:
         if int(chainId) == 1:
             w3 = w3_ethereum
             doTransfer = w3.eth.contract(address=w3_ethereum.toChecksumAddress('0x39c62b375e210d4dfec3cad2dc15b41174a4e573'), 
@@ -546,9 +586,9 @@ async def send_invoice(invoice: Invoice):
 
     response_ipfs = requests.post('https://ipfs.infura.io:5001/api/v0/add', 
                          files=files, 
-                         auth=('2GAbK7KQ6k3v5qUfi9Z0L84TpEl','2c56f751a84475e86cb52059b0b9789e'))
+                         auth=(infura_key_1, infura_key_2))
 
-    return 'localhost:8080/pay?hash='+json.loads(response_ipfs.text)['Hash']
+    return 'https://opcall.donft.io/pay?hash='+json.loads(response_ipfs.text)['Hash']
 
 
 @app.post("/writeCheck/")
@@ -568,6 +608,7 @@ async def writeCheck(check: Check):
 
     params['title'] = check.title
     params['check'] = check.checkData
+    params['erc'] = check.erc
     params['isPermit'] = str(check.isPermit)
     params['permitOwner'] = check.permitMessage['owner']
     params['permitSpender'] = check.permitMessage['spender']
@@ -576,7 +617,27 @@ async def writeCheck(check: Check):
 
     hash_params = sendToIPFS(params)
 
-    return 'localhost:8080/pay?hash='+hash_signature+hash_params
+    return 'https://opcall.donft.io/pay?hash='+hash_signature+hash_params
+
+@app.post("/writeCheckNFT/")
+
+async def writeCheckNFT(check: CheckNFT):
+
+    signatures = {}
+    params = {}
+
+    signatures['check'] = check.checkSignature
+
+    hash_signature = sendToIPFS(signatures)
+
+
+    params['title'] = check.title
+    params['check'] = check.checkData
+    params['erc'] = check.erc
+
+    hash_params = sendToIPFS(params)
+
+    return 'https://opcall.donft.io/pay?hash='+hash_signature+hash_params
 
 
 @app.get("/get_ipfs/{hash}/")
