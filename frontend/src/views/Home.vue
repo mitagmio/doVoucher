@@ -28,12 +28,12 @@
         </div>
       </div>
       <div class="m-form__input m-form__extra-info">
-        <button @click="submit" class="btn">Submit receipt</button>
+        <button @click="submit" class="btn">Make check</button>
       </div>
     </div>
     <div class="pay__qr__div" v-else-if="qrCode">
       <vue-qrcode :value='qrCode' :options="{ width: 200 }" ></vue-qrcode>
-      <div><input class="pay__link" :value="qrCode" disabled><button class="pay__copy__button" @click="copy">Copy</button></div>
+      <div><a :href="qrCode">{{ qrCode }}</a></div>
     </div>
     <LoaderElement class="collections" v-if="form.isLoading">Loading...</LoaderElement>
   </Sketch>
@@ -135,8 +135,7 @@
     const submit = async () => {
         try{
             form.isLoading = true
-            console.log(form)
-            const val = await AppConnector.connector.signInvoice(form.title, form.amount, form.tokenAddress)
+            const val = await AppConnector.connector.writeCheck(form.title, form.amount, form.tokenAddress)
             console.log(val, '---VAL')
             qrCode.value = val
         }

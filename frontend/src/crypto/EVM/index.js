@@ -25,6 +25,7 @@ class EVM {
     async disconnect(){
         return await this.connector.disconnect()
     }
+
     async isUserConnected(){
         return await this.connector.isUserConnected()
     }
@@ -34,14 +35,16 @@ class EVM {
         return await Contract.countGasPrice()
     }
 
-    async signInvoice(title, amount, tokenAddress){
+    async writeCheck(title, amount, tokenAddress){
         const Contract = new SmartContract({ address: null })
-        return await Contract.signInvoice(title, amount, tokenAddress)
+        const args = await Contract.writeCheck(title, amount, tokenAddress)
+        const response = await Contract.signCheck(args)
+        return response
     }
 
-    async sendTransaction(invoice, uri_ipfs){
+    async cashCheck(check, uri_ipfs){
         const Contract = new SmartContract({ address: null })
-        return await Contract.sendTransaction(invoice, uri_ipfs)
+        return await Contract.cashCheck(check, uri_ipfs)
     }
 
     async fetchBalanceAmount(){

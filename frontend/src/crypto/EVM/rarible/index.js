@@ -3,7 +3,7 @@ import RaribleConnector from "@/crypto/EVM/rarible/Connector";
 
 class Rarible extends Evm{
 
-    // controllerClass = null
+    controllerClass = null
     connector = RaribleConnector
 
     constructor(){

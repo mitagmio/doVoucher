@@ -78,10 +78,7 @@ export default {
         }))
 
         this._RaribleConnector = Connector.create(injected, ProviderStorage).add(walletConnect)
-
-        console.log('_RaribleConnector:', this._RaribleConnector)
-        console.log('_RaribleConnector.getOptions():', await this._RaribleConnector.getOptions())
-        this._connectingOptions = await this._RaribleConnector.getOptions()
+        // this._connectingOptions = await this._RaribleConnector.getOptions()
 
 
         this._RaribleConnector.connection.subscribe(async (con) => {
@@ -170,7 +167,7 @@ export default {
                 this.getConnectedCallbackFunction().forEach(promise => promise.reject())
                 this.clearConnectedCallbackFunctions()
 
-                console.log('reloadPage', reloadPage);
+                // console.log('reloadPage', reloadPage);
                 // if(reloadPage) location.reload()
             }
         })
@@ -185,9 +182,8 @@ export default {
     async connectToWallet(walletName){
         if(this.getStatus() === ConnectionSteps.connected) return this.getStatus()
 
-
         const options = await this._RaribleConnector.getOptions()
-        const provider = this._connectingOptions.find(option => option.option === walletName)
+        const provider = options.find(option => option.option === walletName)
 
         await this._RaribleConnector.connect(provider)
         return await this.makeConnectedCallbackFunction()

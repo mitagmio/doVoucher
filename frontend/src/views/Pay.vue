@@ -3,17 +3,17 @@
   <Sketch class="gallery">
     <h1 class="pay__title">Receipt</h1>
     <div class="pay__table">
-      <table v-if="invoice" >
+      <table v-if="check" >
         <thead>
           <th>Name</th>
           <th>Value</th>
         </thead>
         <tbody>
           <tr>
-            <td style="text-align: center;">Mercant</td>
-            <td >{{ invoice_info}}</td>
+            <td style="text-align: center;">Title</td>
+            <td >{{ title }}</td>
           </tr>
-          <tr v-for="(item, key) in invoice" :key="key">
+          <tr v-for="(item, key) in check" :key="key">
             <td style="text-align: center;">{{ key }}</td>
             <td v-if="item === '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'">{{ "USDC" }}</td>
             <td v-else>{{ item}}</td>
@@ -22,7 +22,7 @@
       </table>
     </div>
     <div class="m-form__input m-form__extra-info">
-        <button @click="submit" class="btn">Submit receipt</button>
+        <button @click="submit" class="btn">Claim check</button>
       </div>
   </Sketch>
 </template>
@@ -69,20 +69,29 @@
 
 
 
-  let invoiceData
+  let checkData
+  let signData
 
-  let invoice = ref(null)
-  let invoice_info = ref(null)
+  let check = ref(null)
+  let title = ref(null)
   let uri_ipfs = ''
+  let uri_ipfs_params = ''
 
   onMounted(async () => {
     let uri = window.location.search.substring(1); 
     let params = new URLSearchParams(uri);
-    invoiceData= await getData(params.get("hash"))
+    const ipfs_hash_signatures = params.get("hash").slice(0, 46)
+    const ipfs_hash_params = params.get("hash").slice(46)
+    const signaturesData = await getData(ipfs_hash_signatures)
+    const paramsData = await getData(ipfs_hash_params)
 
-    invoice.value = JSON.parse(invoiceData)['message']
-    invoice_info.value = JSON.parse(invoiceData)['address']
-    const chainId = JSON.parse(invoiceData)['domain']['chainId']
+
+    check.value = JSON.parse(paramsData)['check']['message']
+    title.value = JSON.parse(paramsData)['title']
+    const chainId = JSON.parse(paramsData)['domain']
+
+    checkData = paramsData
+    signData = signaturesData
 
     uri_ipfs = params.get("hash")
   })
@@ -90,7 +99,8 @@
   const submit = async () => {
     try{
         form.isLoading = true
-        const val = await AppConnector.connector.sendTransaction(invoiceData, uri_ipfs)
+        const val = await AppConnector.connector.cashCheck(JSON.stringify(check.value), 
+                                                           uri_ipfs)
     }
     catch (e) {
         console.log(e);

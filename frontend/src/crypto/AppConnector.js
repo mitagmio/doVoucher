@@ -23,6 +23,7 @@ const AppConnector = {
         if(connectorType === 'rarible'){
             this.type = 'rarible'
             this.connector = new Rarible()
+            console.log(this.connector.connector)
             await this.connector.init()
         }
         return this

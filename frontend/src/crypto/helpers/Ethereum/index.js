@@ -55,7 +55,7 @@ const settings = {
         tokens: 'tokensMainnet',
 
         chainlinkPriceAddress: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419',
-        doPayAddress: '0xC7d78cb7C3Cc064AdC96c6285D8524c0c1b3fdEd',
+        QRCheckAddress: '0x103A3b128991781EE2c8db0454cA99d67b257923',
         // for initing erc20 contract
         nativeAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', //weth
         defaultActiveToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // usdc
