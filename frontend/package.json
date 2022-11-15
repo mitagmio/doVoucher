@@ -1,0 +1,42 @@
+{
+  "name": "eth_start",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "export NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service serve",
+    "dev": "vue-cli-service serve",
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service build"
+  },
+  "dependencies": {
+    "@1inch/limit-order-protocol": "^2.0.4",
+    "@1inch/permit-signed-approvals-utils": "^1.4.2",
+    "@chenfengyuan/vue-qrcode": "^2.0.0",
+    "@kyvg/vue3-notification": "^2.4.1",
+    "@rarible/connector": "^0.9.11-beta.2",
+    "@rarible/connector-helper": "^0.9.11-beta.2",
+    "@rarible/connector-walletconnect": "^0.9.11-beta.2",
+    "axios": "^0.27.2",
+    "core-js": "^3.6.5",
+    "ethers": "^5.6.9",
+    "nvm": "^0.0.4",
+    "pinia": "^2.0.14",
+    "qrcode.vue": "^3.3.3",
+    "tslib": "^2.4.0",
+    "vue": "^3.0.0",
+    "vue-router": "^4.0.0-0",
+    "web3": "^1.0.0-beta.37"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.15",
+    "@vue/cli-plugin-router": "~4.5.15",
+    "@vue/cli-service": "~4.5.15",
+    "@vue/compiler-sfc": "^3.0.0",
+    "sass": "^1.26.5",
+    "sass-loader": "^8.0.2"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
