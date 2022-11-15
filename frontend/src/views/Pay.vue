@@ -1,7 +1,7 @@
 
 <template>
   <Sketch class="gallery">
-    <h1 class="pay__title">Receipt</h1>
+    <!--<h1 class="pay__title">Receipt</h1>-->
     <div class="pay__table">
       <div v-if="check"></div>
         <div v-if="erc=='ERC20'">
@@ -12,12 +12,15 @@
             </thead>
             <tbody>
               <tr>
-                <td style="text-align: center;">Title</td>
+                <td style="text-align: center;">Description</td>
                 <td >{{ title }}</td>
               </tr>
-              <tr v-for="(item, key) in check" :key="key">
-                <td style="text-align: center;">{{ key }}</td>
-                <td v-if="item === '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'">{{ "USDC" }}</td>
+              <tr v-for="(item, key) in check" :key="key" v-if="key!='nonce'">
+                <td v-if="key === 'fromChainId'">{{ "chain" }}</td>
+                <td v-else>{{ key }}</td>
+                <td v-if="item === '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'">{{ "USDC" }}</td>
+                <td v-else-if="item === '137'">{{ "Polygon" }}</td>
+                <td v-else-if="item === '1'">{{ "Ethereum" }}</td>
                 <td v-else>{{ item}}</td>
               </tr>
             </tbody>
@@ -41,6 +44,7 @@
             </tbody>
           </table>
           <div v-if="gallery">
+            <br>
             <h2>NFT Title</h2>
             <div>{{ JSON.parse(gallery.metadata)['name'] }}</div>
             <h2>NFT Description</h2>
@@ -50,7 +54,7 @@
         </div>
       </div>
       <div class="m-form__input m-form__extra-info">
-        <button @click="submit" class="btn">Claim check</button>
+        <button @click="submit" class="btn">Claim</button>
       </div>
   </Sketch>
 </template>

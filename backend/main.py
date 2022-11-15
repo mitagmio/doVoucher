@@ -22,13 +22,13 @@ w3 = Web3(Web3.HTTPProvider("https://rpc.ankr.com/polygon"))
 
 
 owner = w3.toChecksumAddress('0xB24471e4b038D82090AD03ac7bD9abCC5303D3aa')
-owner_pk = os.getenv("OWNER_PK")
+owner_pk = os.getenv("OWNER_PK_1")
 infura_key_1 = os.getenv("INFURA_KEY_1")
 infura_key_2 = os.getenv("INFURA_KEY_2")
 pass_key = os.getenv("PASS_KEY")
 
 
-abi = open("./ABI/doPay.json", "r")
+abi = open("./ABI/QRCheck.json", "r")
 abi_USDC_eth = open("./ABI/usdc_eth.json", "r")
 abi_USDC_poly = open("./ABI/usdc_poly.json", "r")
 
@@ -55,7 +55,7 @@ def sendToIPFS(params):
     files = {'file': str(params)}
     response_ipfs = requests.post('https://ipfs.infura.io:5001/api/v0/add', 
                     files=files, 
-                    auth=infura_key_1(,infura_key_2))
+                    auth=(infura_key_1,infura_key_2))
 
     return json.loads(response_ipfs.text)['Hash']
 
@@ -132,14 +132,14 @@ class CheckNFT(BaseModel):
 async def send_transaction(execute: Execute):
     if int(execute.fromChainId) == 1:
         w3 = w3_ethereum
-        abi = open("./ABI/doPay.json", "r")
+        abi = open("./ABI/QRCheck.json", "r")
         abi_deBridge = open("./ABI/deBridge.json", "r")
         # token = w3.eth.contract(address=w3.toChecksumAddress(usdc_address_eth), abi=abi_USDC_eth.read())
         doTransfer = w3.eth.contract(address=doPay_eth, abi=abi.read())
         deBridge = w3.eth.contract(address=deBridge_address, abi=abi_deBridge.read())
     elif int(execute.fromChainId) == 137:
         w3 = w3_polygon
-        abi = open("./ABI/doPay.json", "r")
+        abi = open("./ABI/QRCheck.json", "r")
         abi_deBridge = open("./ABI/deBridge.json", "r")
         # token = w3.eth.contract(address=w3.toChecksumAddress(usdc_address_poly), abi=abi_USDC_poly.read())
         doPay = w3.eth.contract(address=doPay_poly, abi=abi.read())
@@ -294,40 +294,62 @@ async def sendExecuteCheck(executeCheck: ExecuteCheck):
 
         receiver_address = checkingSignature(executeCheck.transactionMessage, executeCheck.transactionSignature)
 
-        permitMessage = [
-            json.loads(checkData)['permitOwner'],
-            json.loads(checkData)['permitSpender'],
-            int(json.loads(checkData)['permitValue']),
-            int(json.loads(checkData)['permitDeadline']),
-            json.loads(checkSignature)['permitV'],
-            json.loads(checkSignature)['permitR'],
-            json.loads(checkSignature)['permitS']
-        ]
+        if json.loads(checkData)['permitOwner'] == '0x0000000000000000000000000000000000000000':
+
+            signed_txn = w3.eth.account.sign_transaction(dict(
+                nonce=w3.eth.get_transaction_count(owner),
+                maxFeePerGas=w3.eth.gas_price+w3.eth.max_priority_fee+100000,
+                maxPriorityFeePerGas=w3.eth.gas_price+100000,
+                gas=200000,
+                to=w3.toChecksumAddress(executeCheck.transactionMessage['message']['executor']),
+                value=0,
+                data=qrCheck.encodeABI(fn_name='executeCheck', 
+                                    args=[tuple(json.loads(checkData)['check']['message'].values()), 
+                                        json.loads(checkSignature)['check'],
+                                        receiver_address
+                                        ]),
+                chainId=w3.eth.chain_id,
+                ),
+                owner_pk,
+            )
+            success = w3.eth.send_raw_transaction(signed_txn.rawTransaction.hex())
+            
+            return success.hex()
+        else:
+            permitMessage = [
+                json.loads(checkData)['permitOwner'],
+                json.loads(checkData)['permitSpender'],
+                int(json.loads(checkData)['permitValue']),
+                int(json.loads(checkData)['permitDeadline']),
+                json.loads(checkSignature)['permitV'],
+                json.loads(checkSignature)['permitR'],
+                json.loads(checkSignature)['permitS']
+            ]
 
 
-        print(qrCheck.functions.verifyCheck(json.loads(checkData)['check']['message'], 
-                                            json.loads(checkSignature)['check']).call())
+            print(qrCheck.functions.verifyCheck(json.loads(checkData)['check']['message'], 
+                                                json.loads(checkSignature)['check']).call())
 
-        signed_txn = w3.eth.account.sign_transaction(dict(
-            nonce=w3.eth.get_transaction_count(owner),
-            maxFeePerGas=w3.eth.gas_price+w3.eth.max_priority_fee+100000,
-            maxPriorityFeePerGas=w3.eth.gas_price+100000,
-            gas=200000,
-            to=w3.toChecksumAddress(executeCheck.transactionMessage['message']['executor']),
-            value=0,
-            data=qrCheck.encodeABI(fn_name='executeCheckPermit', 
-                                args=[tuple(json.loads(checkData)['check']['message'].values()), 
-                                    tuple(permitMessage),
-                                    json.loads(checkSignature)['check'],
-                                    receiver_address
-                                    ]),
-            chainId=w3.eth.chain_id,
-            ),
-            owner_pk,
-        )
-        success = w3.eth.send_raw_transaction(signed_txn.rawTransaction.hex())
-        
-        return success.hex()
+            signed_txn = w3.eth.account.sign_transaction(dict(
+                nonce=w3.eth.get_transaction_count(owner),
+                maxFeePerGas=w3.eth.gas_price+w3.eth.max_priority_fee+100000,
+                maxPriorityFeePerGas=w3.eth.gas_price+100000,
+                gas=200000,
+                to=w3.toChecksumAddress(executeCheck.transactionMessage['message']['executor']),
+                value=0,
+                data=qrCheck.encodeABI(fn_name='executeCheckPermit', 
+                                    args=[tuple(json.loads(checkData)['check']['message'].values()), 
+                                        tuple(permitMessage),
+                                        json.loads(checkSignature)['check'],
+                                        receiver_address
+                                        ]),
+                chainId=w3.eth.chain_id,
+                ),
+                owner_pk,
+            )
+            success = w3.eth.send_raw_transaction(signed_txn.rawTransaction.hex())
+            
+            return success.hex()
     
     elif executeCheck.erc == "ERC721":
 

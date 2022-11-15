@@ -1,13 +1,13 @@
-# doVaucher
+# doVoucher
 
 ## Try it here https://opcall.donft.io/
 
-Create gasless vaucher with ERC20 or ERC721 tokens
+Gasless voucher with ERC20 or ERC721 tokens
 
 
 ## Presentation for EthLisbon
 
-https://github.com/txme/doV
+
 
 ## Demo
 

@@ -259,14 +259,14 @@ class SmartContract {
                 isPermit = false
                 try{
                     let permitMessage = {
-                        'owner': '',
-                        'spender': '',
+                        'owner': '0x0000000000000000000000000000000000000000',
+                        'spender': '0x0000000000000000000000000000000000000000',
                         'value': 0,
                         'deadline': 0
                     }
                     let v = 0
-                    let r = ''
-                    let s = ''
+                    let r = '0x0000000000000000000000000000000000000000'
+                    let s = '0x0000000000000000000000000000000000000000'
 
                     const args = {
                         title,
