@@ -1,22 +1,21 @@
 # doVoucher
 
-## Try it here https://opcall.donft.io/
+## Try it here https://voucher.donft.io/
 
 Gasless voucher with ERC20 or ERC721 tokens
 
 
-## Presentation for EthLisbon
+## Presentation for Istanbul Hack
 
-
+https://github.com/txme/doVoucher/doVoucher.pdf
 
 ## Demo
 
-
-
+https://youtu.be/7QFFCKE9ezM
 
 ## Links
 
-https://opcall.donft.io/
+https://voucher.donft.io/
 
 Polygon contract 
 0x9cff7c429f9d31f6cbf9958e551e40aa382c563c
