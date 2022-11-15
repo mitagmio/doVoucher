@@ -185,20 +185,9 @@ export default {
     async connectToWallet(walletName){
         if(this.getStatus() === ConnectionSteps.connected) return this.getStatus()
 
-        console.log('walletName', walletName == 'Metamask')
-        console.log('web3', this._connectingOptions.find(option => option.option === 'Web3'))
-        // if (walletName == 'Web3')
-        // {
-        //     const provider = this._connectingOptions.find(option => option.option === 'Web3')
-        // }
-        // else{
-        const provider = this._connectingOptions.find(option => option.option === walletName)
 
-        if (!provider){
-            const provider = this._connectingOptions.find(option => option.option === 'Web3')
-        }
-        // }
-        // console.log('Provider', this._connectingOptions)
+        const options = await this._RaribleConnector.getOptions()
+        const provider = this._connectingOptions.find(option => option.option === walletName)
 
         await this._RaribleConnector.connect(provider)
         return await this.makeConnectedCallbackFunction()

@@ -7,7 +7,7 @@
     >
       <div class="sketch__header-row">
         <div class="sketch__logo">
-          doPay
+          Checkey
         </div>
         <div
           class="header__right desktop"

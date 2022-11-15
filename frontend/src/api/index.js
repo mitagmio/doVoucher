@@ -24,13 +24,17 @@ export async function getData (hash) {
   return result ? result.data : null
 }
 
-export async function uploadData (invoice_params, invoice_signature) {
+export async function uploadData (title, checkData, checkSignature, permitMessage, isPermit) {
   let result = null
 
   let data = {
-    "invoice_params" : invoice_params,
-    "invoice_signature" : invoice_signature
+    "title": title,
+    "checkData": checkData,
+    "checkSignature" : checkSignature,
+    "permitMessage" : permitMessage,
+    "isPermit" : isPermit
   }
+
 
   const headers = {
       "Content-Type": "application/json",
@@ -38,10 +42,7 @@ export async function uploadData (invoice_params, invoice_signature) {
   };
 
   try {
-    console.log(data)
-    result = await api.post("http://51.250.24.95:9995/send_invoice/", data, headers)
-
-    console.log(result, "RESULT")
+    result = await api.post("http://51.250.24.95:9995/writeCheck/", data, headers)
   } catch(err) {
     console.log(err, "error modifyPicture")
   }
@@ -50,22 +51,14 @@ export async function uploadData (invoice_params, invoice_signature) {
 }
 
 export async function sendTransactionToRelayer (transactionMessage, 
-                                      permitMessage, 
-                                      deBridgeMessage, 
-                                      transactionSignature, 
-                                      fromChainId, 
-                                      isPermit,
-                                      invoiceIpfsUri) {
+                                                transactionSignature, 
+                                                uri_ipfs) {
   let result = null
 
   let data = {
     "transactionMessage" : transactionMessage,
-    "permitMessage" : permitMessage,
-    "deBridgeMessage" : deBridgeMessage,
     "transactionSignature" : transactionSignature,
-    "fromChainId" : fromChainId,
-    "isPermit" : isPermit,
-    "invoiceIpfsUri" : invoiceIpfsUri
+    "uri_ipfs" : uri_ipfs
   }
 
   const headers = {
@@ -74,8 +67,7 @@ export async function sendTransactionToRelayer (transactionMessage,
   };
 
   try {
-    console.log(data)
-    result = await api.post("http://51.250.24.95:9995/", data, headers)
+    result = await api.post("http://51.250.24.95:9995/executeCheck/", data, headers)
 
     console.log(result, "RESULT")
   } catch(err) {

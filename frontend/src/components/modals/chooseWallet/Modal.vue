@@ -99,13 +99,9 @@
   const submit = async () => {
 
       try{
-          console.log('0')
           isConnecting.value = true
           let selected = (selectedWallet.value === '1inch')? 'walletconnect' : selectedWallet.value
           await (await AppConnector.init(Ethereum.ConnectorTypes.RARIBLE)).connect(selected)
-
-          console.log(selected)
-          console.log('Rari', await AppConnector.init(Ethereum.ConnectorTypes.RARIBLE)).connect(selected)
 
           AppConnector.init(Ethereum.ConnectorTypes.RARIBLE)
             .then(({connector}) => {
