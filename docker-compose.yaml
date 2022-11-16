@@ -1,81 +1,31 @@
 version: "3.9" 
 
 services:
-  txme:
-    build: ../doTransfer/frontend
-    restart: always
-    depends_on:
-      - "txme_back"
-    environment:
-      - PUBLIC_HOST=$TX_URL
-      - LETSENCRYPT_HOST=$TX_URL
-      - VIRTUAL_HOST=$TX_URL
-      - VUE_APP_API_TIMEOUT=200
-      - VUE_APP_MOBILE_SKETCH=900
-      - VUE_APP_NETWORK=testnet
-      - VUE_APP_NETWORK_MATICMUM_SUPPORT=1
-      - VUE_APP_NETWORK_POLYGON_MAINNET_SUPPORT=1
-  txme_back:
-    build: ../doTransfer/backend
-    restart: always
-    ports:
-      - 9995:9995
-    environment:
-      - PUBLIC_HOST=$TX_BACKEND_URL
-      - LETSENCRYPT_HOST=$TX_BACKEND_URL
-      - VIRTUAL_HOST=$TX_BACKEND_URL
-      - OWNER_PK="249199bb50ef6201de24f80c694674a09833a6bedcfa2b59eb2b4a67815fb7ad"
-      - PASSWORD_ENV="METAPIPER_1985"
-  dopay:
-    build: ../doPay/frontend
-    restart: always
-    depends_on:
-      - "dopay_back"
-    environment:
-      - PUBLIC_HOST=$PAY_URL
-      - LETSENCRYPT_HOST=$PAY_URL
-      - VIRTUAL_HOST=$PAY_URL
-      - VUE_APP_API_TIMEOUT=200
-      - VUE_APP_MOBILE_SKETCH=900
-      - VUE_APP_NETWORK=testnet
-      - VUE_APP_NETWORK_MATICMUM_SUPPORT=1
-      - VUE_APP_NETWORK_POLYGON_MAINNET_SUPPORT=1
-  dopay_back:
-    build: ../doPay/backend
-    restart: always
-    ports:
-      - 9996:9996
-    environment:
-      - PUBLIC_HOST=$PAY_BACKEND_URL
-      - LETSENCRYPT_HOST=$PAY_BACKEND_URL
-      - VIRTUAL_HOST=$PAY_BACKEND_URL
-      - OWNER_PK="249199bb50ef6201de24f80c694674a09833a6bedcfa2b59eb2b4a67815fb7ad"
-      - PASSWORD_ENV="METAPIPER_1985"
-  opcall_frontend:
+  voucher:
     build: ./frontend
     restart: always
     depends_on:
-      - "opcall_backend"
+      - "voucher_backend"
     environment:
-      - PUBLIC_HOST=$OPCALL_URL
-      - VIRTUAL_HOST=$OPCALL_URL
-      - LETSENCRYPT_HOST=$OPCALL_URL
-      - VUE_APP_API_URL=$OPCALL_BACKEND_URL
+      - PUBLIC_HOST=$VOUCHER_URL
+      - VIRTUAL_HOST=$VOUCHER_URL
+      - LETSENCRYPT_HOST=$VOUCHER_URL
+      - VUE_APP_API_URL=$VOUCHER_BACKEND_URL
       - VUE_APP_API_TIMEOUT=200
       - VUE_APP_MOBILE_SKETCH=900
       - VUE_APP_NETWORK=testnet
       - VUE_APP_NETWORK_MATICMUM_SUPPORT=1
       - VUE_APP_NETWORK_POLYGON_MAINNET_SUPPORT=1
-  opcall_backend:
+  voucher_backend:
     build: ./backend
     restart: always
     ports:
       - 9997:9997
     environment:
-      - PUBLIC_HOST=$OPCALL_BACKEND_URL
-      - VIRTUAL_HOST=$OPCALL_BACKEND_URL
-      - LETSENCRYPT_HOST=$OPCALL_BACKEND_URL
-      - OWNER_PK="249199bb50ef6201de24f80c694674a09833a6bedcfa2b59eb2b4a67815fb7ad"
+      - PUBLIC_HOST=$VOUCHER_BACKEND_URL
+      - VIRTUAL_HOST=$VOUCHER_BACKEND_URL
+      - LETSENCRYPT_HOST=$VOUCHER_BACKEND_URL
+      - OWNER_PK=""
       - PASSWORD_ENV="METAPIPER_1985"
   nginx_cert:
     image: nginxproxy/nginx-proxy
@@ -98,9 +48,5 @@ services:
       - /etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
-      - "opcall_frontend"
-      - "opcall_backend"
-      - "txme"
-      - "txme_back"
-      - "dopay_back"
-      - "dopay"
+      - "voucher"
+      - "voucher_backend"
