@@ -26,7 +26,7 @@ services:
       - VIRTUAL_HOST=$VOUCHER_BACKEND_URL
       - LETSENCRYPT_HOST=$VOUCHER_BACKEND_URL
       - OWNER_PK=""
-      - PASSWORD_ENV="METAPIPER_1985"
+      - PASSWORD_ENV=""
   nginx_cert:
     image: nginxproxy/nginx-proxy
     restart: always
