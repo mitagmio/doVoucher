@@ -27,8 +27,9 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ### build
 
-    docker build --rm --no-cache -t opcall:latest .
+    docker build --rm --no-cache -t voucher:latest .
 
 ### run
 
-    docker run --rm  -p 80:80  --name opcall opcall:latest
+    docker run --rm  -p 80:80  --name voucher voucher:latest
+

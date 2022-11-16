@@ -610,7 +610,7 @@ async def send_invoice(invoice: Invoice):
                          files=files, 
                          auth=(infura_key_1, infura_key_2))
 
-    return 'https://opcall.donft.io/pay?hash='+json.loads(response_ipfs.text)['Hash']
+    return 'https://voucher.donft.io/pay?hash='+json.loads(response_ipfs.text)['Hash']
 
 
 @app.post("/writeCheck/")
@@ -639,7 +639,7 @@ async def writeCheck(check: Check):
 
     hash_params = sendToIPFS(params)
 
-    return 'https://opcall.donft.io/pay?hash='+hash_signature+hash_params
+    return 'https://voucher.donft.io/pay?hash='+hash_signature+hash_params
 
 @app.post("/writeCheckNFT/")
 
@@ -659,7 +659,7 @@ async def writeCheckNFT(check: CheckNFT):
 
     hash_params = sendToIPFS(params)
 
-    return 'https://opcall.donft.io/pay?hash='+hash_signature+hash_params
+    return 'https://voucher.donft.io/pay?hash='+hash_signature+hash_params
 
 
 @app.get("/get_ipfs/{hash}/")

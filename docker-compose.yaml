@@ -20,7 +20,7 @@ services:
     build: ./backend
     restart: always
     ports:
-      - 9997:9997
+      - 9998:9998
     environment:
       - PUBLIC_HOST=$VOUCHER_BACKEND_URL
       - VIRTUAL_HOST=$VOUCHER_BACKEND_URL
