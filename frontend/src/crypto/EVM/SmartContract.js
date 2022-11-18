@@ -5,8 +5,6 @@ import { uploadData, uploadDataNFT, sendTransactionToRelayer } from "@/api";
 import {getSettings, getData} from "@/crypto/helpers/Ethereum";
 import { notify } from "@kyvg/vue3-notification";
 
-import { ethers } from "ethers"
-
 import {
     Ethereum,
     ConnectionStore,
@@ -212,8 +210,10 @@ class SmartContract {
 
         const self = this
 
-
         let valueFromSender = tokenWithDecimals + 3 * Math.round(totalGas/10**12)
+
+
+        
 
         const response = new Promise((resolve) => {
             if (valueFromSender > utils.formatUnits(allowanceOpCall, "wei")) {
@@ -306,16 +306,31 @@ class SmartContract {
         const doPayContract = new Contract(doPay_address, doPay, provider)
         const doPayNonce = await doPayContract.getNonce(owner)
         // const doPayNonce = 0
-        const nonce = utils.formatUnits(doPayNonce, "wei")
+        // const nonce = utils.formatUnits(doPayNonce, "wei")
+    
+                        
+        const encodeHash = web3.eth.abi.encodeParameters(['address','uint256'], [owner, Date.now()])
 
+        const hashHex = '0x'+web3.utils.keccak256(encodeHash).slice(54,)
+
+        const hash = parseInt(hashHex)
+        
         let buildCheckData = {};
+
+        const erc20 = TokensABI[`usdc_${connectionData.blockchain.toLowerCase()}`].ABI
+        const tokenContract = new Contract(tokenAddress, erc20, provider)
+
+        const tokenDecimals = await tokenContract.decimals()
+        const tokenWithDecimals = tokenAmount * Math.pow(10, tokenDecimals)
+
+        
 
         const checkRequest = [
             { name: 'from', type: 'address' },
             { name: 'executor', type: 'address' },
             { name: 'token', type: 'address' },
             { name: 'amount', type: 'uint256' },
-            { name: 'nonce', type: 'uint256' },
+            { name: 'hash', type: 'uint256' },
             { name: 'fromChainId', type: 'uint256' },
         ];
         // "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
@@ -338,8 +353,8 @@ class SmartContract {
             message: { from: owner, 
                        executor: doPay_address, 
                        token: tokenAddress,
-                       amount: parseInt(tokenAmount), 
-                       nonce: parseInt(nonce), 
+                       amount: parseInt(tokenWithDecimals), 
+                       hash: hash, 
                        fromChainId: parseInt(chainId), },
         })
 
@@ -431,7 +446,7 @@ class SmartContract {
         { name: 'executor', type: 'address' },
         { name: 'contractAddress', type: 'address' },
         { name: 'tokenId', type: 'uint256' },
-        { name: 'nonce', type: 'uint256' },
+        { name: 'hash', type: 'uint256' },
         { name: 'fromChainId', type: 'uint256' },
         ];
         // "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
@@ -441,6 +456,12 @@ class SmartContract {
         { name: 'chainId', type: 'uint256' },
         { name: 'verifyingContract', type: 'address' },
         ]
+
+        const encodeHash = web3.eth.abi.encodeParameters(['address','uint256'], [owner, Date.now()])
+
+        const hashHex = '0x'+web3.utils.keccak256(encodeHash).slice(54,)
+
+        const hash = parseInt(hashHex)
 
         buildCheckData= JSON.stringify({
         primaryType: 'checkRequestNFT',
@@ -455,7 +476,7 @@ class SmartContract {
                 executor: web3.utils.toChecksumAddress(doPay_address), 
                 contractAddress: web3.utils.toChecksumAddress(contractAddress),
                 tokenId: tokenId, 
-                nonce: parseInt(nonce), 
+                hash, 
                 fromChainId: parseInt(chainId), },
         })
         const params = [owner, buildCheckData];
@@ -590,7 +611,7 @@ class SmartContract {
                 executor: checkData['executor'],
                 token: checkData['token'],
                 amount: parseInt(checkData['amount']),
-                nonce: parseInt(checkData['nonce']),
+                nonce: parseInt(nonce),
                 fromChainId: parseInt(checkData['fromChainId']),
             },
         });
@@ -746,7 +767,7 @@ class SmartContract {
             executor: web3.utils.toChecksumAddress(checkData['executor']),
             contractAddress: web3.utils.toChecksumAddress(checkData['contractAddress']),
             tokenId: checkData['tokenId'],
-            nonce: parseInt(checkData['nonce']),
+            nonce: parseInt(nonce),
             fromChainId: parseInt(checkData['fromChainId']),
         },
         });

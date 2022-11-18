@@ -104,7 +104,7 @@ const settings = {
         tokens: 'tokensPolygon',
 
         chainlinkPriceAddress: '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0',
-        QRCheckAddress: '0x9cff7c429f9d31f6cbf9958e551e40aa382c563c',
+        QRCheckAddress: '0x3bf7c7e05fae0e3dc7071a53629bf6c49c05c6e8',
         nativeAddress: '0x0000000000000000000000000000000000001010',
         defaultActiveToken: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // usdc
     }
