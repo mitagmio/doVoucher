@@ -7,7 +7,7 @@ Gasless voucher with ERC20 or ERC721 tokens
 
 ## Presentation for Istanbul Hack
 
-https://github.com/mitagmio/doVoucher/doVoucher.pdf
+https://github.com/mitagmio/doVoucher/blob/main/doVoucher.pdf
 
 ## Demo
 
